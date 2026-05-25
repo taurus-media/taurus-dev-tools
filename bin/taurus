@@ -1,0 +1,162 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# Load libraries
+TAURUS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "${TAURUS_ROOT}/lib/utils.sh"
+source "${TAURUS_ROOT}/lib/config.sh"
+source "${TAURUS_ROOT}/lib/filesystem.sh"
+source "${TAURUS_ROOT}/lib/docker.sh"
+source "${TAURUS_ROOT}/lib/hosts.sh"
+source "${TAURUS_ROOT}/lib/ssh.sh"
+source "${TAURUS_ROOT}/lib/database.sh"
+source "${TAURUS_ROOT}/lib/magento.sh"
+
+usage() {
+    echo "Usage: taurus <command> [options]"
+    echo ""
+    echo "Commands:"
+    echo "  init      Initialize a new Magento project"
+    echo "  start     Start project containers (stub)"
+    echo "  stop      Stop project containers (stub)"
+    echo "  restart   Restart project containers (stub)"
+    echo "  ssh       Access project container via SSH (stub)"
+    echo "  destroy   Remove project containers and configuration (stub)"
+    echo ""
+    echo "Options for init:"
+    echo "  --project <name>    Project name (e.g., ogm2)"
+    echo "  --repo <url>       Bitbucket repository URL"
+    echo "  --php <version>    PHP version (8.2, 8.3, 8.4)"
+    echo "  --db <path>        Path to database dump (.sql or .sql.gz)"
+    echo "  --media <path>     Path to media archive (.tar.gz)"
+}
+
+cmd_init() {
+    local project=""
+    local repo=""
+    local php=""
+    local db_dump=""
+    local media_archive=""
+
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --project) project="$2"; shift 2 ;;
+            --repo) repo="$2"; shift 2 ;;
+            --php) php="$2"; shift 2 ;;
+            --db) db_dump="$2"; shift 2 ;;
+            --media) media_archive="$2"; shift 2 ;;
+            *) exit_with_error "Unknown option: $1" ;;
+        esac
+    done
+
+    # Validation
+    [[ -z "$project" ]] && exit_with_error "--project is required"
+    [[ -z "$repo" ]] && exit_with_error "--repo is required"
+    [[ -z "$php" ]] && exit_with_error "--php is required"
+
+    local domain="${project}.local"
+    local project_path="${HOME}/Projects/${domain}"
+    local container_name="$domain"
+    local db_name="$project"
+    local php_image
+    php_image=$(get_php_image "$php")
+
+    log_info "Initializing project: $project"
+    
+    # 1. Project Directory
+    ensure_project_dir "${HOME}/Projects"
+    
+    # 2. Clone Repo
+    clone_repo "$repo" "$project_path"
+    
+    # 3. Hosts File
+    update_hosts "$domain"
+    
+    # 4. Start Container
+    run_container "$container_name" "$php_image" "$project_path"
+    
+    # 5. Get Assigned Ports
+    # Now using static ports as requested
+    local port_80=80
+    local port_443=443
+    local port_3306=3306
+    local port_22=22
+    
+    # 6. Metadata
+    save_metadata "$project_path" \
+        "PROJECT=${project}" \
+        "DOMAIN=${domain}" \
+        "PHP_VERSION=${php}" \
+        "CONTAINER=${container_name}" \
+        "DB_NAME=${db_name}" \
+        "PORT_80=${port_80}" \
+        "PORT_443=${port_443}" \
+        "PORT_3306=${port_3306}" \
+        "PORT_22=${port_22}"
+
+    # 7. SSH Access
+    configure_ssh_access "$container_name"
+    
+    # 8. Vhosts Configuration
+    configure_vhosts "$container_name" "$domain"
+    
+    # 9. Database Configuration
+    create_database "$container_name" "$db_name"
+    if [[ -n "$db_dump" ]]; then
+        import_database "$container_name" "$db_name" "$db_dump"
+    fi
+    
+    # 10. Media Import
+    if [[ -n "$media_archive" ]]; then
+        extract_media "$media_archive" "${project_path}/pub/media"
+    fi
+    
+    # 11. Composer
+    run_composer_install "$container_name"
+    
+    # 12. Magento env.php
+    local db_password
+    db_password=$(get_db_password)
+    generate_env_php "$project_path" "$db_name" "app" "$db_password" "http://${domain}/"
+    
+    # 13. Symlinks
+    # Inside container: ~/public -> ~/magento2/pub
+    # Note: ~ in Hypernode container for 'app' user is /data/web
+    create_container_symlink "$container_name" "/data/web/magento2/pub" "/data/web/public"
+    
+    # 14. Magento Setup Commands
+    run_magento_setup "$container_name"
+    
+    # 15. Base URL Configuration
+    configure_magento_base_urls "$container_name" "$domain"
+    
+    log_success "Project $project initialized successfully!"
+    echo "Domain: http://$domain"
+    echo "Local Path: $project_path"
+    echo "Container: $container_name"
+}
+
+# Main Command Router
+if [[ $# -lt 1 ]]; then
+    usage
+    exit 0
+fi
+
+COMMAND=$1
+shift
+
+case $COMMAND in
+    init)
+        cmd_init "$@"
+        ;;
+    start|stop|restart|ssh|destroy)
+        log_info "Command '$COMMAND' is currently a stub."
+        ;;
+    help|--help|-h)
+        usage
+        ;;
+    *)
+        exit_with_error "Unknown command: $COMMAND"
+        ;;
+esac
