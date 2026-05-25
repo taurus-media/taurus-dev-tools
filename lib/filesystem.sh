@@ -42,5 +42,6 @@ create_container_symlink() {
     local target=$3
     
     log_info "Creating symlink inside container: $target -> $source"
+    docker exec "$container_name" rm -rf "$target"
     docker exec "$container_name" ln -sf "$source" "$target"
 }
