@@ -36,7 +36,6 @@ run_magento_setup() {
     log_info "Running Magento setup commands..."
     
     docker exec -u app -w /data/web/magento2 "$container_name" bin/magento setup:upgrade
-    docker exec -u app -w /data/web/magento2 "$container_name" bin/magento setup:static-content:deploy -f -j 4
 }
 
 configure_magento_base_urls() {
