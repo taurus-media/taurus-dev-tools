@@ -39,19 +39,18 @@ save_metadata() {
     done
 }
 
-# Get database password from ~/.my.cnf
+# Get database password from /data/web/.my.cnf inside container
 get_db_password() {
-    local my_cnf="$HOME/.my.cnf"
-    if [[ -f "$my_cnf" ]]; then
-        # Simple parser for password under [client] or [mysql]
-        # We'll look for password=...
-        local password
-        password=$(grep "^password=" "$my_cnf" | head -1 | cut -d'=' -f2 | sed "s/['\"]//g")
-        if [[ -n "$password" ]]; then
-            echo "$password"
-            return
-        fi
+    local container_name=$1
+    local my_cnf="/data/web/.my.cnf"
+    
+    # Try to extract password using docker exec
+    local password
+    password=$(docker exec "$container_name" grep "^password[[:space:]]*=[[:space:]]*" "$my_cnf" 2>/dev/null | head -1 | cut -d'=' -f2- | sed "s/^[[:space:]]*//;s/[[:space:]]*$//;s/['\"]//g" || true)
+    
+    if [[ -n "$password" ]]; then
+        echo "$password"
+    else
+        exit_with_error "Database password not found in $container_name:$my_cnf"
     fi
-    # Default Hypernode password if not found in .my.cnf
-    echo "insecure_db_password"
 }
