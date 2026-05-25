@@ -28,7 +28,7 @@ usage() {
     echo "  --project <name>    Project name (e.g., ogm2)"
     echo "  --repo <url>       Bitbucket repository URL"
     echo "  --php <version>    PHP version (8.2, 8.3, 8.4)"
-    echo "  --db <path>        Path to database dump (.sql or .sql.gz)"
+    echo "  --db <path>        Path to database dump (.sql, .sql.gz, or .tar.gz)"
     echo "  --media <path>     Path to media archive (.tar.gz)"
 }
 

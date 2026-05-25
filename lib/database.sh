@@ -33,7 +33,9 @@ import_database() {
     
     log_info "Importing database dump $dump_path..."
     
-    if [[ "$dump_path" == *.gz ]]; then
+    if [[ "$dump_path" == *.tar.gz ]]; then
+        tar -xOzf "$dump_path" | docker exec -i "$container_name" mysql "$db_name"
+    elif [[ "$dump_path" == *.gz ]]; then
         gunzip -c "$dump_path" | docker exec -i "$container_name" mysql "$db_name"
     else
         docker exec -i "$container_name" mysql "$db_name" < "$dump_path"
