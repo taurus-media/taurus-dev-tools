@@ -118,7 +118,7 @@ cmd_init() {
     # 12. Magento env.php
     local db_password
     db_password=$(get_db_password)
-    generate_env_php "$project_path" "$db_name" "app" "$db_password" "http://${domain}/"
+    generate_env_php "$container_name" "$db_name" "app" "$db_password" "http://${domain}/"
     
     # 13. Symlinks
     # Inside container: ~/public -> ~/magento2/pub

@@ -65,7 +65,6 @@ Mappings are defined in `config/php-images.conf`.
 
 - **`bin/taurus`**: Main entry point and command router.
 - **`lib/`**: Modularized logic for Docker, Database, Magento, etc.
-- **`templates/`**: Templates for configuration files like `env.php`.
 - **`config/`**: Configuration for PHP versions and Docker images.
 
 ## Project Conventions
