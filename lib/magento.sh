@@ -17,6 +17,9 @@ generate_env_php() {
     
     log_info "Generating app/etc/env.php using bin/magento setup:config:set..."
     
+    local current_date
+    current_date=$(date "+%a, %d %b %Y %H:%M:%S %z")
+    
     docker exec -u app -w /data/web/magento2 "$container_name" bin/magento setup:config:set \
         --db-host="localhost" \
         --db-name="$db_name" \
@@ -24,6 +27,7 @@ generate_env_php() {
         --db-password="$db_password" \
         --backend-frontname="admin" \
         --session-save="files" \
+        --magento-init-params="MAGE_MODE=developer&install[date]=${current_date}" \
         --no-interaction
 }
 
