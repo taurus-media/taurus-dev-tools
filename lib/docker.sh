@@ -36,7 +36,7 @@ build_custom_ssh_image() {
     local php_version=$4
     local php_suffix
     php_suffix=$(echo "$php_version" | tr -d '.')
-    local custom_image_name="taurus-php${php_suffix}-${project_name}:latest"
+    local custom_image_name="taurus-hypernode-php${php_suffix}-mysql80-${project_name}:latest"
     
 #    log_info "Building custom Hypernode image with SSH keys: $custom_image_name"
     
