@@ -2,45 +2,40 @@
 
 set -euo pipefail
 
-# Colors for logging
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-NC='\033[0m'
+REPO_URL="https://github.com/taurus-media/taurus-dev-tools.git"
+INSTALL_DIR="$HOME/.taurus-dev-tools"
+BIN_LINK="/usr/local/bin/taurus"
 
-log_info() {
-    echo -e "${GREEN}[INSTALL]${NC} $1"
-}
+echo "🚀 Installing Taurus Dev Tools..."
 
-log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
+# Verify dependencies
+for cmd in git docker curl; do
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        echo "❌ Missing dependency: $cmd"
+        exit 1
+    fi
+done
 
-# Verify Docker exists
-if ! command -v docker >/dev/null 2>&1; then
-    log_error "Docker is not installed. Please install Docker for Mac first."
-    exit 1
+# Remove old installation
+if [ -d "$INSTALL_DIR" ]; then
+    echo "📦 Updating existing installation..."
+    rm -rf "$INSTALL_DIR"
 fi
 
-# Verify git exists
-if ! command -v git >/dev/null 2>&1; then
-    log_error "git is not installed."
-    exit 1
-fi
-
-# Create symlink into /usr/local/bin/taurus
-TAURUS_SOURCE="$(pwd)/bin/taurus"
-TAURUS_TARGET="/usr/local/bin/taurus"
-
-if [[ ! -f "$TAURUS_SOURCE" ]]; then
-    log_error "Taurus source not found at $TAURUS_SOURCE. Please run install.sh from the project root."
-    exit 1
-fi
-
-log_info "Creating symlink /usr/local/bin/taurus..."
-sudo ln -sf "$TAURUS_SOURCE" "$TAURUS_TARGET"
+# Clone repository
+git clone "$REPO_URL" "$INSTALL_DIR"
 
 # Make executable
-log_info "Making taurus executable..."
-chmod +x "$TAURUS_SOURCE"
+chmod +x "$INSTALL_DIR/bin/taurus"
 
-log_info "Installation complete! You can now use the 'taurus' command."
+# Create global symlink
+echo "🔗 Creating global taurus command..."
+
+sudo ln -sf "$INSTALL_DIR/bin/taurus" "$BIN_LINK"
+
+echo ""
+echo "✅ Taurus Dev Tools installed successfully!"
+echo ""
+echo "Run:"
+echo "  taurus --help"
+echo ""
