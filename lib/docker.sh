@@ -29,6 +29,36 @@ run_container() {
     sleep 10
 }
 
+build_custom_ssh_image() {
+    local base_image=$1
+    local pub_key_path=$2
+    local project_name=$3
+    local custom_image_name="taurus-${project_name}:latest"
+    
+#    log_info "Building custom Hypernode image with SSH keys: $custom_image_name"
+    
+    local tmp_dir
+    tmp_dir=$(mktemp -d)
+    cp "$pub_key_path" "${tmp_dir}/id_rsa.pub"
+    
+    cat > "${tmp_dir}/Dockerfile" <<EOF
+FROM ${base_image}
+RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh
+COPY id_rsa.pub /root/.ssh/authorized_keys
+RUN chmod 600 /root/.ssh/authorized_keys && \
+    mkdir -p /data/web/.ssh && \
+    cp /root/.ssh/authorized_keys /data/web/.ssh/authorized_keys && \
+    chown -R app:app /data/web/.ssh && \
+    chmod 700 /data/web/.ssh && \
+    chmod 600 /data/web/.ssh/authorized_keys
+EOF
+
+    docker build -t "$custom_image_name" "$tmp_dir" >/dev/null
+    rm -rf "$tmp_dir"
+    
+    echo "$custom_image_name"
+}
+
 get_container_port() {
     local container_name=$1
     local internal_port=$2

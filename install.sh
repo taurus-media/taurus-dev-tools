@@ -15,19 +15,19 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# 1. Verify Docker exists
+# Verify Docker exists
 if ! command -v docker >/dev/null 2>&1; then
     log_error "Docker is not installed. Please install Docker for Mac first."
     exit 1
 fi
 
-# 2. Verify git exists
+# Verify git exists
 if ! command -v git >/dev/null 2>&1; then
     log_error "git is not installed."
     exit 1
 fi
 
-# 3. Create symlink into /usr/local/bin/taurus
+# Create symlink into /usr/local/bin/taurus
 TAURUS_SOURCE="$(pwd)/bin/taurus"
 TAURUS_TARGET="/usr/local/bin/taurus"
 
@@ -39,7 +39,7 @@ fi
 log_info "Creating symlink /usr/local/bin/taurus..."
 sudo ln -sf "$TAURUS_SOURCE" "$TAURUS_TARGET"
 
-# 4. Make executable
+# Make executable
 log_info "Making taurus executable..."
 chmod +x "$TAURUS_SOURCE"
 

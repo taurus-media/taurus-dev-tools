@@ -25,19 +25,6 @@ get_php_image() {
     echo "$image"
 }
 
-# Save project metadata
-save_metadata() {
-    local project_path=$1
-    local metadata_file="${project_path}/.taurus.env"
-    shift
-    
-    # Clean file or create new
-    : > "$metadata_file"
-    
-    for arg in "$@"; do
-        echo "$arg" >> "$metadata_file"
-    done
-}
 
 # Get database password from /data/web/.my.cnf inside container
 get_db_password() {

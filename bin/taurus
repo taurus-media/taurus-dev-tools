@@ -64,71 +64,64 @@ cmd_init() {
 
     log_info "Initializing project: $project"
     
-    # 1. Project Directory
+    # Project Directory
     ensure_project_dir "${HOME}/Projects"
     
-    # 2. Clone Repo
+    # Clone Repo
     clone_repo "$repo" "$project_path"
     
-    # 3. Hosts File
+    # Hosts File
     update_hosts "$domain"
     
-    # 4. Start Container
+    # Start Container
+    local pub_key_path
+    if pub_key_path=$(get_public_key_path); then
+        php_image=$(build_custom_ssh_image "$php_image" "$pub_key_path" "$project")
+    fi
+
+    log_info "IMAGE: $php_image"
+
     run_container "$container_name" "$php_image" "$project_path"
     
-    # 5. Get Assigned Ports
+    # Get Assigned Ports
     # Now using static ports as requested
     local port_80=80
     local port_443=443
     local port_3306=3306
     local port_22=22
     
-    # 6. Metadata
-    save_metadata "$project_path" \
-        "PROJECT=${project}" \
-        "DOMAIN=${domain}" \
-        "PHP_VERSION=${php}" \
-        "CONTAINER=${container_name}" \
-        "DB_NAME=${db_name}" \
-        "PORT_80=${port_80}" \
-        "PORT_443=${port_443}" \
-        "PORT_3306=${port_3306}" \
-        "PORT_22=${port_22}"
 
-    # 7. SSH Access
-    configure_ssh_access "$container_name"
-    
-    # 8. Vhosts Configuration
+    # Vhosts Configuration
     configure_vhosts "$container_name" "$domain"
     
-    # 9. Database Configuration
+    # Database Configuration
     create_database "$container_name" "$db_name"
     if [[ -n "$db_dump" ]]; then
         import_database "$container_name" "$db_name" "$db_dump"
     fi
     
-    # 10. Media Import
+    # Media Import
     if [[ -n "$media_archive" ]]; then
         extract_media "$media_archive" "${project_path}/pub/media"
     fi
     
-    # 11. Composer
+    # Composer
     run_composer_install "$container_name"
     
-    # 12. Magento env.php
+    # Magento env.php
     local db_password
     db_password=$(get_db_password "$container_name")
     generate_env_php "$container_name" "$db_name" "app" "$db_password" "http://${domain}/"
     
-    # 13. Symlinks
+    # Symlinks
     # Inside container: ~/public -> ~/magento2/pub
     # Note: ~ in Hypernode container for 'app' user is /data/web
     create_container_symlink "$container_name" "/data/web/magento2/pub" "/data/web/public"
     
-    # 14. Magento Setup Commands
+    # Magento Setup Commands
     run_magento_setup "$container_name"
     
-    # 15. Base URL Configuration
+    # Base URL Configuration
     configure_magento_base_urls "$container_name" "$domain"
     
     log_success "Project $project initialized successfully!"
