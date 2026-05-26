@@ -34,17 +34,19 @@ This will:
 4. Make the tool executable.
 
 ## Usage
+### Setup a project locally
 
-### Initialize a new project
-
-```bash
-taurus init \
-  --project your-project-name \
-  --repo git@bitbucket.org:taurus_media/ohhg-m2.git \
-  --php 8.3 \
-  --db /path/to/db/dump.sql.gz \
-  --media /path/to/media.tar.gz
-```
+1. Download DB dump
+2. Download media files archive
+3. Init the project:
+    ```bash
+    taurus init \
+      --project your-project-name \
+      --repo git@bitbucket.org:taurus_media/ohhg-m2.git \
+      --php 8.3 \
+      --db /path/to/db/dump.sql.gz \
+      --media /path/to/media.tar.gz
+    ```
 
 Once the project is initialized and the container is running, the frontend will be available at [http://your-project-name.local/](http://your-project-name.local/).
 
