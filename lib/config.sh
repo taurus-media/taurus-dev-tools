@@ -3,7 +3,13 @@
 set -euo pipefail
 
 # Get the directory where the script is located
-TAURUS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+    DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+    SOURCE="$(readlink "$SOURCE")"
+    [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+TAURUS_ROOT="$( cd -P "$( dirname "$SOURCE" )/.." && pwd )"
 CONFIG_DIR="${TAURUS_ROOT}/config"
 
 # Load PHP image mapping
