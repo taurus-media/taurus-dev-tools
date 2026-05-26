@@ -1,6 +1,6 @@
-# Taurus - Magento Local Environment Automation
+# Taurus Dev Tools - Magento Local Environment Automation
 
-Taurus is a CLI tool designed to automate the Magento 2 local setup workflow for macOS development teams using Hypernode Docker images.
+Taurus Dev Tools is a CLI tool designed to automate the Magento 2 local setup workflow for macOS development teams using Hypernode Docker images.
 
 ## Features
 
@@ -21,7 +21,7 @@ Taurus is a CLI tool designed to automate the Magento 2 local setup workflow for
 
 ## Installation
 
-To install Taurus, run the following command:
+To install Taurus Dev Tools, run the following command:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/taurus-media/taurus-dev-tools/master/install.sh | bash
@@ -46,7 +46,16 @@ taurus init \
   --media ~/Downloads/ogm2_media.tar.gz
 ```
 
+Once the project is initialized and the container is running, you can log in to the container via SSH:
+
+```bash
+ssh app@ogm2.local
+```
+
+The SSH public key found on your host machine is automatically added to the container's `authorized_keys`, so there should be no password prompt.
+
 ### Supported PHP Versions
+- 8.1
 - 8.2
 - 8.3
 - 8.4
@@ -62,25 +71,11 @@ Mappings are defined in `config/php-images.conf`.
 - `taurus ssh`: (Stub) Access container via SSH.
 - `taurus destroy`: (Stub) Remove project.
 
-## Architecture Overview
-
-- **`bin/taurus`**: Main entry point and command router.
-- **`lib/`**: Modularized logic for Docker, Database, Magento, etc.
-- **`config/`**: Configuration for PHP versions and Docker images.
-
-## Project Conventions
-
-- **Projects directory**: `~/Projects/`
-- **Domain**: `<project>.local`
-- **Metadata**: Stored in `~/Projects/<project>.local/.taurus.env`
-- **Magento Root (Container)**: `/data/web/magento2`
-- **Public Directory (Container)**: `/data/web/public` (Symlinked to `pub`)
-
 ## Troubleshooting
 
 - **Sudo Prompt**: Taurus requires sudo to update `/etc/hosts` and install the CLI.
 - **Docker Access**: Ensure Docker Desktop is running before using Taurus.
-- **SSH Keys**: Taurus looks for `~/.ssh/id_rsa.pub` to configure container access.
+- **SSH Keys**: Taurus looks for your public key (e.g., `~/.ssh/id_ed25519.pub` or `~/.ssh/id_rsa.pub`) to configure container access. The key is "baked" into a project-specific Docker image for persistence.
 
 ## Future Roadmap
 
