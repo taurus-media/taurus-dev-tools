@@ -39,17 +39,19 @@ This will:
 
 ```bash
 taurus init \
-  --project ogm2 \
+  --project your-project-name \
   --repo git@bitbucket.org:taurus_media/ohhg-m2.git \
   --php 8.3 \
-  --db ~/Downloads/ogm2.sql.gz \
-  --media ~/Downloads/ogm2_media.tar.gz
+  --db /path/to/db/dump.sql.gz \
+  --media /path/to/media.tar.gz
 ```
 
-Once the project is initialized and the container is running, you can log in to the container via SSH:
+Once the project is initialized and the container is running, the frontend will be available at [http://your-project-name.local/](http://your-project-name.local/).
+
+You can also log in to the container via SSH:
 
 ```bash
-ssh app@ogm2.local
+ssh app@your-project-name.local
 ```
 
 The SSH public key found on your host machine is automatically added to the container's `authorized_keys`, so there should be no password prompt.
