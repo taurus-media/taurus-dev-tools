@@ -21,9 +21,12 @@ Taurus is a CLI tool designed to automate the Magento 2 local setup workflow for
 
 ## Installation
 
-Run the installer from the project root:
+To install Taurus, download the source code and run the installer:
 
 ```bash
+wget https://github.com/taurus-media/taurus-tool/archive/refs/heads/main.tar.gz -O taurus-tool.tar.gz
+tar -xzf taurus-tool.tar.gz
+cd taurus-tool-main
 ./install.sh
 ```
 
