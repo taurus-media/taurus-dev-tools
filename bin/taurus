@@ -89,14 +89,6 @@ cmd_init() {
     log_info "IMAGE: $php_image"
 
     run_container "$container_name" "$php_image" "$project_path"
-    
-    # Get Assigned Ports
-    # Now using static ports as requested
-    local port_80=80
-    local port_443=443
-    local port_3306=3306
-    local port_22=22
-    
 
     # Vhosts Configuration
     configure_vhosts "$container_name" "$domain"
