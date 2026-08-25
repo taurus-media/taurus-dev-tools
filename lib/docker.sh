@@ -34,10 +34,11 @@ build_custom_ssh_image() {
     local pub_key_path=$2
     local project_name=$3
     local php_version=$4
+    local node_version="${5:-24.19.0}"
     local php_suffix
     php_suffix=$(echo "$php_version" | tr -d '.')
     local custom_image_name="taurus-hypernode-php${php_suffix}-mysql80-${project_name}:latest"
-    
+
 #    log_info "Building custom Hypernode image with SSH keys: $custom_image_name"
     
     local tmp_dir
@@ -54,6 +55,16 @@ RUN chmod 600 /root/.ssh/authorized_keys && \
     chown -R app:app /data/web/.ssh && \
     chmod 700 /data/web/.ssh && \
     chmod 600 /data/web/.ssh/authorized_keys
+RUN mkdir -p /data/web/.node && \
+    wget -q https://nodejs.org/dist/v${node_version}/node-v${node_version}-linux-x64.tar.xz -O /tmp/node.txz && \
+    tar xJf /tmp/node.txz -C /data/web/.node --strip-components=1 && \
+    rm /tmp/node.txz && \
+    chown -R app:app /data/web/.node && \
+    ln -sf /data/web/.node/bin/node /usr/local/bin/node && \
+    ln -sf /data/web/.node/bin/npm /usr/local/bin/npm && \
+    ln -sf /data/web/.node/bin/npx /usr/local/bin/npx && \
+    echo 'export PATH="/data/web/.node/bin:\$PATH"' >> /data/web/.profile && \
+    chown app:app /data/web/.profile
 EOF
 
     docker build -t "$custom_image_name" "$tmp_dir" >/dev/null

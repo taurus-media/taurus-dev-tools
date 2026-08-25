@@ -34,9 +34,10 @@ usage() {
     echo "Options for init:"
     echo "  --project <name>    Project name (e.g., ogm2)"
     echo "  --repo <url>       Bitbucket repository URL"
-    echo "  --php <version>    PHP version (8.2, 8.3, 8.4)"
-    echo "  --db <path>        Path to database dump (.sql, .sql.gz, or .tar.gz)"
+    echo "  --php <version>    PHP version (8.2, 8.3, 8.4) (default: 8.3)"
+    echo "  --db <path>        Path to database dump (.sql, .sql.gz, or .tar.gz) (required)"
     echo "  --media <path>     Path to media archive (.tar.gz)"
+    echo "  --node-version <v> Node.js version to install (default: 24.19.0)"
 }
 
 cmd_init() {
@@ -45,6 +46,7 @@ cmd_init() {
     local php=""
     local db_dump=""
     local media_archive=""
+    local node_version=""
 
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -53,6 +55,7 @@ cmd_init() {
             --php) php="$2"; shift 2 ;;
             --db) db_dump="$2"; shift 2 ;;
             --media) media_archive="$2"; shift 2 ;;
+            --node-version) node_version="$2"; shift 2 ;;
             *) exit_with_error "Unknown option: $1" ;;
         esac
     done
@@ -60,7 +63,12 @@ cmd_init() {
     # Validation (prompt interactively for anything missing)
     project=$(prompt_for_value "project" "$project" "Project code (e.g. 'my-project')")
     repo=$(prompt_for_value "repo" "$repo" "Repository URL (e.g. 'git@bitbucket.org:taurus_media/ohhg-m2.git')")
-    php=$(prompt_for_value "php" "$php" "PHP Version (e.g. '8.3')")
+    db_dump=$(prompt_for_value "db" "$db_dump" "Path to database dump (.sql, .sql.gz, or .tar.gz)")
+    db_dump=$(expand_path "$db_dump")
+    media_archive=$(prompt_for_value "media" "$media_archive" "Path to media archive (.tar.gz, leave blank to skip)" false "")
+    media_archive=$(expand_path "$media_archive")
+    php=$(prompt_for_value "php" "$php" "PHP Version (e.g. '8.3')" false "8.3")
+    node_version=$(prompt_for_value "node-version" "$node_version" "Node.js version" false "24.19.0")
 
     local domain="${project}.local"
     local project_path="${HOME}/Projects/${domain}"
@@ -83,7 +91,7 @@ cmd_init() {
     # Start Container
     local pub_key_path
     if pub_key_path=$(get_public_key_path); then
-        php_image=$(build_custom_ssh_image "$php_image" "$pub_key_path" "$project" "$php")
+        php_image=$(build_custom_ssh_image "$php_image" "$pub_key_path" "$project" "$php" "$node_version")
     fi
 
     log_info "IMAGE: $php_image"
@@ -119,12 +127,16 @@ cmd_init() {
     
     # Magento Setup Commands
     run_magento_setup "$container_name"
-    
+
+    # Hyva Styles
+    generate_hyva_styles "$container_name"
+
     # Base URL Configuration
     configure_magento_base_urls "$container_name" "$domain"
     
     log_success "Project $project initialized successfully!"
     echo "Domain: http://$domain"
+    echo "Admin Panel: http://$domain/admin"
     echo "Local Path: $project_path"
     echo "Container: $container_name"
 }

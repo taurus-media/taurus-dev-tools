@@ -50,6 +50,39 @@ run_magento_setup() {
     log_info "Running Magento setup commands..."
     
     docker exec -u app -w /data/web/magento2 "$container_name" bin/magento setup:upgrade
+    docker exec -u app -w /data/web/magento2 "$container_name" bin/magento cache:enable
+    docker exec -u app -w /data/web/magento2 "$container_name" bin/magento indexer:reindex
+}
+
+generate_hyva_styles() {
+    local container_name=$1
+
+    if ! docker exec -u app -w /data/web/magento2 "$container_name" test -f deploy-config.php; then
+        return 0
+    fi
+
+    local themes
+    themes=$(docker exec -u app -w /data/web/magento2 "$container_name" php -r '
+        $settings = [];
+        include "deploy-config.php";
+        if (!empty($settings["hyva_themes"])) {
+            echo implode(PHP_EOL, $settings["hyva_themes"]);
+        }
+    ')
+
+    if [[ -z "$themes" ]]; then
+        return 0
+    fi
+
+    log_info "Generating Hyva styles..."
+
+    local theme
+    while IFS= read -r theme; do
+        [[ -z "$theme" ]] && continue
+        log_info "Building Hyva styles for theme: $theme"
+        docker exec -u app -w "/data/web/magento2/app/design/frontend/${theme}/web/tailwind" "$container_name" npm install
+        docker exec -u app -w "/data/web/magento2/app/design/frontend/${theme}/web/tailwind" "$container_name" npm run build
+    done <<< "$themes"
 }
 
 configure_magento_base_urls() {
