@@ -28,8 +28,11 @@ usage() {
     echo "  start     Start project containers (stub)"
     echo "  stop      Stop project containers (stub)"
     echo "  restart   Restart project containers (stub)"
-    echo "  ssh       Access project container via SSH (stub)"
+    echo "  ssh       Access project container via SSH"
     echo "  destroy   Remove project containers and configuration (stub)"
+    echo ""
+    echo "Usage for ssh:"
+    echo "  taurus ssh <project-name>"
     echo ""
     echo "Options for init:"
     echo "  --project <name>    Project name (e.g., ogm2)"
@@ -141,6 +144,21 @@ cmd_init() {
     echo "Container: $container_name"
 }
 
+cmd_ssh() {
+    local project="${1:-}"
+    [[ -n "$project" ]] || exit_with_error "Usage: taurus ssh <project-name>"
+
+    local domain="${project%.local}.local"
+    local container_name="$domain"
+
+    if ! container_is_running "$container_name"; then
+        exit_with_error "Container '$container_name' is not running."
+    fi
+
+    log_info "Connecting to $container_name via SSH..."
+    ssh "app@${domain}"
+}
+
 # Main Command Router
 if [[ $# -lt 1 ]]; then
     usage
@@ -154,7 +172,10 @@ case $COMMAND in
     init)
         cmd_init "$@"
         ;;
-    start|stop|restart|ssh|destroy)
+    ssh)
+        cmd_ssh "$@"
+        ;;
+    start|stop|restart|destroy)
         log_info "Command '$COMMAND' is currently a stub."
         ;;
     help|--help|-h)

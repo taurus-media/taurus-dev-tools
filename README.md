@@ -77,10 +77,10 @@ Once the project is initialized and the container is running, the frontend will 
 You can also log in to the container via SSH:
 
 ```bash
-ssh app@your-project-name.local
+taurus ssh your-project-name
 ```
 
-The SSH public key found on your host machine is automatically added to the container's `authorized_keys`, so there should be no password prompt.
+This checks that the `your-project-name.local` container is running, then connects as the `app` user (equivalent to `ssh app@your-project-name.local`, which also works directly). The SSH public key found on your host machine is automatically added to the container's `authorized_keys`, so there should be no password prompt.
 
 ### Supported PHP Versions
 - 8.1
@@ -100,7 +100,7 @@ If the project's `deploy-config.php` declares a `hyva_themes` list, `taurus init
 - `taurus start`: (Stub) Start project containers.
 - `taurus stop`: (Stub) Stop project containers.
 - `taurus restart`: (Stub) Restart project containers.
-- `taurus ssh`: (Stub) Access container via SSH.
+- `taurus ssh <project-name>`: Fully implemented. Verifies the project's container is running, then SSHes into it as the `app` user.
 - `taurus destroy`: (Stub) Remove project.
 
 ## Troubleshooting

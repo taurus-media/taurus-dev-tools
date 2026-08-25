@@ -73,6 +73,11 @@ EOF
     echo "$custom_image_name"
 }
 
+container_is_running() {
+    local container_name=$1
+    docker ps --format '{{.Names}}' | grep -q "^${container_name}$"
+}
+
 get_container_port() {
     local container_name=$1
     local internal_port=$2
