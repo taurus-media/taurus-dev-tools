@@ -7,10 +7,12 @@ Taurus Dev Tools is a CLI tool designed to automate the Magento 2 local setup wo
 - Automatic Magento 2 repository cloning.
 - Hypernode Docker container management.
 - Automatic `/etc/hosts` configuration.
-- SSH access configuration for developers.
+- SSH access configuration for developers (host SSH public key baked into a per-project Docker image, plus a bundled Node.js runtime for asset builds).
 - Database and media import automation.
-- Automated Magento environment configuration (`env.php`).
-- Composer and Magento setup command execution.
+- Automated Magento environment configuration (`env.php`, developer mode, install date).
+- Composer install, `setup:upgrade`, cache enable, and reindex.
+- Automatic Hyvä theme style builds (detected from `deploy-config.php`).
+- Interactive prompts for any required option left off the command line.
 
 ## Requirements
 
@@ -37,8 +39,15 @@ This will:
 ### Setup a project locally
 
 1. Download DB dump
-2. Download media files archive
+2. Download media files archive (optional)
 3. Init the project:
+    ```bash
+    taurus init
+    ```
+
+    You'll be prompted for each required parameter (project name, repo URL, DB dump path) as well as the optional ones. This is the normal way to run it.
+
+    Alternatively, pass any parameters on the command line to skip their prompt:
     ```bash
     taurus init \
       --project your-project-name \
@@ -47,6 +56,21 @@ This will:
       --db /path/to/db/dump.sql.gz \
       --media /path/to/media.tar.gz
     ```
+
+    This is required for non-interactive use (e.g. CI) — `--project`, `--repo`, and `--db` must all be passed explicitly, since there's no prompt to fall back on. `--media` stays optional (skip it to leave `pub/media` empty), and `--php` still defaults to `8.3`.
+
+    Available options for `init`:
+
+    | Option | Required | Default | Description |
+    |---|---|---|---|
+    | `--project` | Yes | — | Project name, e.g. `ogm2` (site becomes `<project>.local`) |
+    | `--repo` | Yes | — | Git repository URL to clone |
+    | `--db` | Yes | — | Path to database dump (`.sql`, `.sql.gz`, or `.tar.gz`) |
+    | `--media` | No | (skipped) | Path to media archive (`.tar.gz`), extracted into `pub/media` |
+    | `--php` | No | `8.3` | PHP version — see [Supported PHP Versions](#supported-php-versions) |
+    | `--node-version` | No | `24.19.0` | Node.js version installed into the container, used for Hyvä theme builds |
+
+    Paths passed to `--db` and `--media` (or entered at the prompts) support a leading `~`.
 
 Once the project is initialized and the container is running, the frontend will be available at [http://your-project-name.local/](http://your-project-name.local/).
 
@@ -65,6 +89,10 @@ The SSH public key found on your host machine is automatically added to the cont
 - 8.4
 
 Mappings are defined in `config/php-images.conf`.
+
+### Hyvä Theme Styles
+
+If the project's `deploy-config.php` declares a `hyva_themes` list, `taurus init` runs `npm install` and `npm run build` in each theme's `web/tailwind` directory automatically, using the Node.js version bundled into the container. Projects without Hyvä (no `deploy-config.php`, or no `hyva_themes` entries) skip this step.
 
 ### Commands Reference
 
