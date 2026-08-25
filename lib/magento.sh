@@ -14,12 +14,9 @@ generate_env_php() {
     local db_user=$3
     local db_password=$4
     local base_url=$5
-    
+
     log_info "Generating app/etc/env.php using bin/magento setup:config:set..."
-    
-    local current_date
-    current_date=$(date "+%a, %d %b %Y %H:%M:%S %z")
-    
+
     docker exec -u app -w /data/web/magento2 "$container_name" bin/magento setup:config:set \
         --db-host="localhost" \
         --db-name="$db_name" \
@@ -27,8 +24,25 @@ generate_env_php() {
         --db-password="$db_password" \
         --backend-frontname="admin" \
         --session-save="files" \
-        --magento-init-params="MAGE_MODE=developer&install[date]=${current_date}" \
         --no-interaction
+
+    set_env_php_init_params "$container_name"
+}
+
+# --magento-init-params doesn't reliably get written into env.php by
+# setup:config:set on some Magento versions, so set MAGE_MODE and the
+# install date directly on the generated env.php instead.
+set_env_php_init_params() {
+    local container_name=$1
+
+    log_info "Setting MAGE_MODE and install date in env.php..."
+
+    local current_date
+    current_date=$(date "+%a, %d %b %Y %H:%M:%S %z")
+
+    docker exec -u app -w /data/web/magento2 "$container_name" sed -i \
+        "0,/return \[/s//return [\n    'MAGE_MODE' => 'developer',\n    'install' => ['date' => '${current_date}'],/" \
+        app/etc/env.php
 }
 
 run_magento_setup() {
