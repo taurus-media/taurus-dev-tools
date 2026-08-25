@@ -57,10 +57,10 @@ cmd_init() {
         esac
     done
 
-    # Validation
-    [[ -z "$project" ]] && exit_with_error "--project is required"
-    [[ -z "$repo" ]] && exit_with_error "--repo is required"
-    [[ -z "$php" ]] && exit_with_error "--php is required"
+    # Validation (prompt interactively for anything missing)
+    project=$(prompt_for_value "project" "$project" "Project code (e.g. 'my-project')")
+    repo=$(prompt_for_value "repo" "$repo" "Repository URL (e.g. 'git@bitbucket.org:taurus_media/ohhg-m2.git')")
+    php=$(prompt_for_value "php" "$php" "PHP Version (e.g. '8.3')")
 
     local domain="${project}.local"
     local project_path="${HOME}/Projects/${domain}"
