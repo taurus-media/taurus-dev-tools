@@ -63,12 +63,18 @@ generate_hyva_styles() {
 
     local themes
     themes=$(docker exec -u app -w /data/web/magento2 "$container_name" php -r '
+        error_reporting(0);
         $settings = [];
-        include "deploy-config.php";
-        if (!empty($settings["hyva_themes"])) {
+        try {
+            include "deploy-config.php";
+        } catch (\Throwable $e) {
+            // deploy-config.php is a Deployer file; its task()/after() calls are
+            // undefined here. $settings is already populated by this point.
+        }
+        if (!empty($settings["hyva_themes"]) && is_array($settings["hyva_themes"])) {
             echo implode(PHP_EOL, $settings["hyva_themes"]);
         }
-    ')
+    ' 2>/dev/null)
 
     if [[ -z "$themes" ]]; then
         return 0
